@@ -48,6 +48,7 @@ const innerFooter = `<footer class="footer footer--inner">
         <img src="/assets/logo.png" alt="" width="44" height="44" loading="lazy">
         <strong>Moralist</strong>
       </a>
+      <p class="footer__disclaimer">Moralist bukan produk resmi YouTube atau Google.</p>
     </div>
     <nav class="footer__links" aria-label="Footer">
       <a href="/#unduh">Unduh</a>
@@ -131,7 +132,6 @@ export function homePage({ latest, history, base }) {
           </div>
         </div>
         <div class="hero__signal">
-          <span class="hero__signal-icon material-symbols-rounded" aria-hidden="true">headphones</span>
           <div>
             <strong>Pemutar untuk Android</strong>
             <p>Dibuat untuk pengguna Indonesia, dengan pembaruan langsung dari dalam aplikasi.</p>
@@ -194,7 +194,6 @@ export function homePage({ latest, history, base }) {
         <p class="who">${esc(SITE.developer)}</p>
         <p><a href="mailto:${esc(SITE.email)}">${esc(SITE.email)}</a></p>
         <p><a class="btn btn-outlined" href="${esc(SITE.donate)}" rel="noopener">Belikan saya kopi</a></p>
-        <p class="note">Moralist bukan produk resmi YouTube atau Google.</p>
       </div>
     </div>
   </section>
@@ -206,6 +205,7 @@ export function homePage({ latest, history, base }) {
         <img src="/assets/logo.png" alt="" width="44" height="44" loading="lazy">
         <strong>Moralist</strong>
       </a>
+      <p class="footer__disclaimer">Moralist bukan produk resmi YouTube atau Google.</p>
     </div>
     <nav class="footer__links" aria-label="Footer">
       <a href="#unduh">Unduh</a>
