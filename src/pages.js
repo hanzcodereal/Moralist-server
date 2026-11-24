@@ -240,15 +240,27 @@ export function adminPage(username) {
 </body></html>`;
 }
 
-export function invitePage(code) {
+export function invitePage(code, active = false) {
   const safe = String(code || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 8).toUpperCase();
+  let body;
+  if (!safe) {
+    body = '<p>Link undangan ini tidak memuat kode room.</p>';
+  } else if (!active) {
+    body = '<p class="invite-gone">Room sudah tidak ada.</p><p>Kode room ini sudah tidak aktif. Minta teman untuk membuat room baru.</p>';
+  } else {
+    body = `<p>Kode room kamu:</p>
+  <p class="invite-code" id="room-code-text" aria-label="Kode room">${esc(safe)}</p>
+  <p><button class="btn btn-main" id="copy-room-code" data-target="room-code-text" type="button">Salin kode</button></p>
+  <p id="room-copy-status" role="status"></p>`;
+  }
   return `${head('Undangan Dengar Bersama: Moralist', 'Gabung ke room Dengar Bersama di Moralist.')}
 <body class="plain">
 <header class="top">${mark()}<nav aria-label="Utama"><a href="/">Beranda</a></nav></header>
 <main class="prose">
   <h1>Undangan Dengar Bersama</h1>
-  ${safe ? `<p>Kode room kamu:</p><p class="invite-code" aria-label="Kode room">${esc(safe)}</p>` : '<p>Link undangan ini tidak memuat kode room.</p>'}
+  ${body}
   <p>Buka Moralist, masuk ke menu Dengar Bersama, lalu pilih Gabung dan masukkan kode di atas. Belum punya aplikasinya? <a href="/#unduh">Unduh Moralist</a>.</p>
 </main>
+<script src="/assets/site.js" defer></script>
 </body></html>`;
 }
