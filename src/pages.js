@@ -49,20 +49,19 @@ const FEATURES = [
 
 export function homePage({ latest, history, base }) {
   const dl = latest
-    ? `<p class="dl-version">${esc(latest.version)}</p>
-       <dl class="facts">
+    ? `<dl class="facts">
+         <div><dt>Versi</dt><dd>${esc(latest.version)}</dd></div>
          <div><dt>Ukuran</dt><dd>${esc(formatSize(latest.size))}</dd></div>
          <div><dt>Dirilis</dt><dd>${esc(formatDate(latest.created_at))}</dd></div>
          <div><dt>Android</dt><dd>7.0 ke atas</dd></div>
-         <div><dt>SHA-256</dt><dd class="hash" id="sha">${esc(latest.sha256)}</dd></div>
        </dl>
-       <div class="actions">
-         <a class="btn btn-main" href="/download/${esc(latest.version)}" download>Unduh APK ${esc(latest.version)}</a>
-         <button class="btn btn-quiet" type="button" id="copy-sha" data-target="sha">Salin SHA-256</button>
+       <div class="download__actions">
+         <a class="btn btn-filled btn-lg" href="/download/${esc(latest.version)}" download>Unduh APK ${esc(latest.version)}</a>
+         <button class="btn btn-outlined" type="button" id="copy-sha" data-target="sha">Salin SHA-256</button>
        </div>
+       <p class="hash-line"><span>SHA-256</span> <code class="hash" id="sha">${esc(latest.sha256)}</code></p>
        <p class="note" id="copy-status" role="status"></p>`
-    : `<p class="dl-version dl-empty">Belum ada rilis</p>
-       <p class="empty">Admin belum menerbitkan berkas APK. Kunjungi lagi nanti, atau hubungi <a href="mailto:${SITE.email}">${SITE.email}</a>.</p>`;
+    : `<p class="empty">Belum ada rilis. Admin belum menerbitkan berkas APK. Kunjungi lagi nanti, atau hubungi <a href="mailto:${SITE.email}">${SITE.email}</a>.</p>`;
 
   const rows = history.length
     ? history
@@ -72,69 +71,122 @@ export function homePage({ latest, history, base }) {
         .join('')
     : '';
 
-  return `${head('Moralist: pemutar YouTube Music untuk Android', 'Moralist adalah pemutar YouTube Music berbahasa Indonesia untuk Android. Unduh APK resmi dari Hanz Dev Official.')}
+  return `${head('Moralist: pemutar YouTube Music untuk Android', 'Moralist adalah pemutar YouTube Music berbahasa Indonesia untuk Android. Unduh APK resmi dari Hanz Dev Official.').replace('/assets/style.css', '/assets/home.css')}
 <body>
-<a class="skip" href="#unduh">Lompat ke unduhan</a>
-<header class="top">
-  ${mark()}
-  <nav aria-label="Utama">
-    <a href="#unduh">Unduh</a>
-    <a href="#isi">Isi aplikasi</a>
-    <a href="#riwayat">Riwayat</a>
-    <a href="#kontak">Kontak</a>
-  </nav>
+<a class="skip-link" href="#unduh">Lompat ke unduhan</a>
+<header class="navbar">
+  <div class="container navbar__inner">
+    <a class="navbar__brand" href="/" aria-label="Moralist, beranda">
+      <img class="navbar__brand-mark" src="/assets/logo.png" alt="" width="46" height="46">
+      <span>Moralist</span>
+    </a>
+    <nav class="navbar__links" aria-label="Utama">
+      <a href="#isi">Isi aplikasi</a>
+      <a href="#riwayat">Riwayat</a>
+      <a href="#kontak">Kontak</a>
+      <a class="btn btn-filled btn-sm" href="#unduh">Unduh</a>
+    </nav>
+  </div>
 </header>
-<main>
-  <section class="hero">
-    <div class="wave" role="img" aria-label="Gelombang suara, logo Moralist"></div>
-    <h1>Moralist</h1>
-    <p class="lede">Pemutar YouTube Music untuk Android. Seluruh tampilannya berbahasa Indonesia, dari menu sampai pesan galat.</p>
+<main id="main">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="container">
+      <div class="hero__layout">
+        <div class="hero__copy">
+          <h1 id="hero-title">Musik <span>tanpa gangguan</span></h1>
+          <p class="hero__lede">Moralist adalah pemutar YouTube Music untuk Android. Seluruh tampilannya berbahasa Indonesia, dari menu sampai pesan galat.</p>
+          <div class="hero__actions">
+            <a class="btn btn-filled btn-lg" href="#unduh">Unduh APK</a>
+            <a class="btn btn-outlined btn-lg" href="#isi">Lihat isi aplikasi</a>
+          </div>
+        </div>
+        <div class="hero__signal">
+          <span class="hero__signal-icon material-symbols-rounded" aria-hidden="true">headphones</span>
+          <div>
+            <strong>Pemutar untuk Android</strong>
+            <p>Dibuat untuk pengguna Indonesia, dengan pembaruan langsung dari dalam aplikasi.</p>
+          </div>
+          <dl class="hero__stats" aria-label="Informasi rilis">
+            <div><dt>Versi</dt><dd>${latest ? esc(latest.version) : 'Belum ada'}</dd></div>
+            <div><dt>Android</dt><dd>7.0+</dd></div>
+            <div><dt>Bahasa</dt><dd>Indonesia</dd></div>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="isi" class="features section-band" aria-labelledby="h-isi">
+    <div class="container">
+      <header class="features-head">
+        <h2 id="h-isi">Isi aplikasi</h2>
+        <p>Daftar ini mengikuti fitur yang ada di kode Moralist ${esc(SITE.appVersion)}.</p>
+      </header>
+      <div class="features__grid">
+        ${FEATURES.map(([t, d], i) => `<article class="features__card features__card--${(i % 6) + 1}"><div class="features__copy"><h3>${esc(t)}</h3><p>${esc(d)}</p></div></article>`).join('\n        ')}
+      </div>
+    </div>
   </section>
 
   <section class="download" id="unduh" aria-labelledby="h-unduh">
-    <h2 id="h-unduh">Unduh</h2>
-    <div class="download-body">
-      ${dl}
-      <ol class="steps">
-        <li>Buka berkas APK di ponselmu.</li>
-        <li>Jika Android meminta, izinkan pemasangan dari browser atau pengelola berkas yang kamu pakai.</li>
-        <li>Pembaruan berikutnya bisa diambil dari dalam aplikasi, menu Pengaturan lalu Pembaruan.</li>
-      </ol>
+    <div class="container">
+      <div class="download__panel">
+        <div class="download__copy">
+          <h2 id="h-unduh">Unduh <span>Moralist</span></h2>
+          <p>APK resmi dari situs ini. Pasang di ponselmu, lalu pembaruan berikutnya bisa diambil dari dalam aplikasi.</p>
+        </div>
+        <div class="download__details">
+          ${dl}
+          <ol class="steps">
+            <li>Buka berkas APK di ponselmu.</li>
+            <li>Jika Android meminta, izinkan pemasangan dari browser atau pengelola berkas yang kamu pakai.</li>
+            <li>Pembaruan berikutnya bisa diambil dari dalam aplikasi, menu Pengaturan lalu Pembaruan.</li>
+          </ol>
+        </div>
+      </div>
     </div>
   </section>
 
-  <section class="features" id="isi" aria-labelledby="h-isi">
-    <div class="features-head">
-      <h2 id="h-isi">Isi aplikasi</h2>
-      <p>Daftar ini mengikuti fitur yang ada di kode Moralist ${SITE.appVersion}.</p>
+  <section class="history section-band" id="riwayat" aria-labelledby="h-riwayat">
+    <div class="container">
+      <h2 id="h-riwayat">Riwayat versi</h2>
+      ${
+        rows
+          ? `<div class="table-wrap" tabindex="0" role="region" aria-label="Tabel riwayat versi"><table><thead><tr><th scope="col">Versi</th><th scope="col">Tanggal</th><th scope="col">Ukuran</th><th scope="col"><span class="sr-only">Unduh</span></th></tr></thead><tbody>${rows}</tbody></table></div>`
+          : '<p class="empty">Belum ada versi yang diterbitkan.</p>'
+      }
     </div>
-    <ol class="index">
-      ${FEATURES.map(([t, d]) => `<li><h3>${esc(t)}</h3><p>${esc(d)}</p></li>`).join('\n      ')}
-    </ol>
-  </section>
-
-  <section class="history" id="riwayat" aria-labelledby="h-riwayat">
-    <h2 id="h-riwayat">Riwayat versi</h2>
-    ${
-      rows
-        ? `<div class="table-wrap" tabindex="0" role="region" aria-label="Tabel riwayat versi"><table><thead><tr><th scope="col">Versi</th><th scope="col">Tanggal</th><th scope="col">Ukuran</th><th scope="col"><span class="sr">Unduhan</span></th></tr></thead><tbody>${rows}</tbody></table></div>`
-        : '<p class="empty">Belum ada versi yang diterbitkan.</p>'
-    }
   </section>
 
   <section class="contact" id="kontak" aria-labelledby="h-kontak">
-    <h2 id="h-kontak">Kontak</h2>
-    <div class="contact-body">
-      <p class="who">${SITE.developer}</p>
-      <p><a href="mailto:${SITE.email}">${SITE.email}</a></p>
-      <p><a class="btn btn-main" href="${SITE.donate}" rel="noopener">Belikan saya kopi</a></p>
-      <p class="note">Moralist bukan produk resmi YouTube atau Google.</p>
+    <div class="container">
+      <div class="contact__panel">
+        <h2 id="h-kontak">Kontak</h2>
+        <p class="who">${esc(SITE.developer)}</p>
+        <p><a href="mailto:${esc(SITE.email)}">${esc(SITE.email)}</a></p>
+        <p><a class="btn btn-outlined" href="${esc(SITE.donate)}" rel="noopener">Belikan saya kopi</a></p>
+        <p class="note">Moralist bukan produk resmi YouTube atau Google.</p>
+      </div>
     </div>
   </section>
 </main>
-<footer class="foot">
-  <div class="wave wave-small" aria-hidden="true"></div>
-  <p>&copy; 2026 ${SITE.developer}. <a href="/privacy">Privasi</a></p>
+<footer class="footer">
+  <div class="container">
+    <div class="footer__top">
+      <a class="footer__brand" href="/" aria-label="Moralist, beranda">
+        <img src="/assets/logo.png" alt="" width="44" height="44" loading="lazy">
+        <strong>Moralist</strong>
+      </a>
+    </div>
+    <nav class="footer__links" aria-label="Footer">
+      <a href="#unduh">Unduh</a>
+      <a href="#isi">Isi aplikasi</a>
+      <a href="/privacy">Privasi</a>
+    </nav>
+    <div class="footer__bottom">
+      <p>&copy; 2026 ${esc(SITE.developer)}. Moralist bukan produk resmi YouTube atau Google.</p>
+    </div>
+  </div>
 </footer>
 <script src="/assets/site.js" defer></script>
 </body></html>`;
