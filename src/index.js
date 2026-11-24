@@ -14,7 +14,7 @@ import { invitePage, homePage, privacyPage, notFoundPage, adminLoginPage, adminP
 const PORT = Number(process.env.PORT || 3000);
 const MAX_APK_BYTES = Number(process.env.MAX_APK_MB || 300) * 1024 * 1024;
 const PUBLIC_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'public');
-const TYPES = { '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.png': 'image/png', '.svg': 'image/svg+xml' };
+const TYPES = { '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.png': 'image/png', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.ttf': 'font/ttf', '.webp': 'image/webp' };
 
 const baseUrl = (req) => {
   if (process.env.PUBLIC_URL) return process.env.PUBLIC_URL.replace(/\/$/, '');
