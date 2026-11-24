@@ -262,7 +262,10 @@ async function route(req, res) {
     const list = publishedReleases();
     return html(res, 200, homePage({ latest: list[0] || null, history: list, base: baseUrl(req) }));
   }
-  if (p === '/listen' || p === '/party') return html(res, 200, invitePage(url.searchParams.get('code') || url.searchParams.get('r')));
+  if (p === '/listen' || p === '/party') {
+    const code = String(url.searchParams.get('code') || url.searchParams.get('r') || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 8).toUpperCase();
+    return html(res, 200, invitePage(code, lt.roomExists(code)));
+  }
   if (p === '/privacy') return html(res, 200, privacyPage());
   if (p.startsWith('/assets/')) return serveStatic(req, res, p.slice('/assets/'.length));
   if (p === '/api/health') return json(res, 200, { ok: true, listenTogether: lt.stats() });
