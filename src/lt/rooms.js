@@ -11,6 +11,7 @@ const MAX_USERS = Number(process.env.LT_MAX_USERS || 20);
 const MAX_ROOMS = Number(process.env.LT_MAX_ROOMS || 2000);
 const MAX_QUEUE = 500;
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const ROOM_CODE_LENGTH = 8; // harus sama dengan ROOM_CODE_LENGTH di aplikasi (ListenTogetherScreen.kt)
 const FEATURES = ['server_restarting'];
 
 const rooms = new Map(); // kode -> room
@@ -21,7 +22,7 @@ const now = () => Date.now();
 const id = () => crypto.randomBytes(8).toString('hex');
 const token = () => crypto.randomBytes(24).toString('base64url');
 const cleanName = (s) => String(s ?? '').replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 32);
-const cleanCode = (s) => String(s ?? '').replace(/[^A-Za-z0-9]/g, '').slice(0, 8).toUpperCase();
+const cleanCode = (s) => String(s ?? '').replace(/[^A-Za-z0-9]/g, '').slice(0, ROOM_CODE_LENGTH).toUpperCase();
 const sanitizeTrack = (t) => t && typeof t.id === 'string' && t.id
   ? { id: t.id.slice(0, 64), title: String(t.title ?? '').slice(0, 300), artist: String(t.artist ?? '').slice(0, 300), album: String(t.album ?? '').slice(0, 300), duration: Math.max(0, Number(t.duration) || 0), thumbnail: String(t.thumbnail ?? '').slice(0, 600), suggested_by: String(t.suggested_by ?? '').slice(0, 64) }
   : null;
@@ -206,7 +207,7 @@ const ack = (conn, requestId) => requestId && send(conn, 'ack', {}, requestId);
 function uniqueCode() {
   for (let i = 0; i < 20; i++) {
     let code = '';
-    for (let j = 0; j < 6; j++) code += CODE_ALPHABET[crypto.randomInt(CODE_ALPHABET.length)];
+    for (let j = 0; j < ROOM_CODE_LENGTH; j++) code += CODE_ALPHABET[crypto.randomInt(CODE_ALPHABET.length)];
     if (!rooms.has(code)) return code;
   }
   return null;
