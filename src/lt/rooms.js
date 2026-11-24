@@ -4,7 +4,7 @@ import { db } from '../db.js';
 import { encode, decode } from './proto.js';
 
 const GRACE_MS = Number(process.env.LT_GRACE_SEC || 300) * 1000; // waktu tunggu sebelum user terputus dianggap keluar
-const HOST_GRACE_MS = Number(process.env.LT_HOST_GRACE_SEC || 45) * 1000; // waktu tunggu sebelum host terputus digantikan
+const HOST_GRACE_MS = Number(process.env.LT_HOST_GRACE_SEC || 60) * 1000; // waktu tunggu sebelum room ditutup karena host terputus
 const JOIN_TIMEOUT_MS = 90 * 1000;
 const BARRIER_TIMEOUT_MS = 20 * 1000;
 const MAX_USERS = Number(process.env.LT_MAX_USERS || 20);
@@ -26,6 +26,8 @@ const cleanCode = (s) => String(s ?? '').replace(/[^A-Za-z0-9]/g, '').slice(0, R
 const sanitizeTrack = (t) => t && typeof t.id === 'string' && t.id
   ? { id: t.id.slice(0, 64), title: String(t.title ?? '').slice(0, 300), artist: String(t.artist ?? '').slice(0, 300), album: String(t.album ?? '').slice(0, 300), duration: Math.max(0, Number(t.duration) || 0), thumbnail: String(t.thumbnail ?? '').slice(0, 600), suggested_by: String(t.suggested_by ?? '').slice(0, 64) }
   : null;
+
+export const roomExists = (code) => rooms.has(code);
 
 export const stats = () => ({
   rooms: rooms.size,
@@ -117,16 +119,23 @@ function roomState(room) {
 // ---------- siklus hidup user ----------
 function scheduleGrace(room, user) {
   clearTimeout(user.graceTimer);
-  const wait = user.userId === room.hostId ? HOST_GRACE_MS : GRACE_MS;
+  const isHost = user.userId === room.hostId;
   user.graceTimer = setTimeout(() => {
     if (user.conn || !rooms.has(room.code)) return;
-    if (user.userId === room.hostId) {
-      const next = pickNextHost(room, user.userId, true);
-      if (next) { setHost(room, next); user.graceTimer = setTimeout(() => !user.conn && removeUser(room, user.userId), Math.max(GRACE_MS - HOST_GRACE_MS, 1000)); user.graceTimer.unref(); return; }
-    }
+    // Host yang tidak kembali sampai masa tunggu habis menutup room untuk semua anggota.
+    if (user.userId === room.hostId) return closeRoom(room);
     removeUser(room, user.userId);
-  }, wait);
+  }, isHost ? HOST_GRACE_MS : GRACE_MS);
   user.graceTimer.unref();
+}
+
+// Tutup room: beri tahu anggota lain, lepaskan koneksi mereka dari room, lalu hapus room.
+function closeRoom(room) {
+  for (const u of room.users.values()) {
+    if (u.userId !== room.hostId && u.conn) send(u.conn, 'kicked', { reason: 'room_closed' });
+    if (u.conn) { u.conn.room = null; u.conn.userId = null; }
+  }
+  dropRoom(room);
 }
 
 function pickNextHost(room, excludeId, connectedOnly) {
@@ -219,6 +228,10 @@ function attach(room, user, conn) {
   user.conn = conn;
   conn.room = room.code;
   conn.userId = user.userId;
+  // Host yang kembali terhubung menerima lagi permintaan gabung yang tertunda.
+  if (user.userId === room.hostId) {
+    for (const p of room.pending.values()) send(conn, 'join_request', { user_id: p.userId, username: p.username });
+  }
 }
 
 function applyPlayback(room, user, p, requestId, conn) {
@@ -315,8 +328,6 @@ const handlers = {
     if (!room) return sendError(conn, 'room_not_found', 'Room tidak ditemukan', rid);
     if (room.users.size + room.pending.size >= MAX_USERS) return sendError(conn, 'room_full', 'Room sudah penuh', rid);
     if ([...room.users.values()].some((u) => u.username.toLowerCase() === username.toLowerCase())) return sendError(conn, 'username_taken', 'Nama itu sudah dipakai di room ini', rid);
-    const hostUser = host(room);
-    if (!hostUser?.conn) return sendError(conn, 'host_offline', 'Host sedang tidak terhubung', rid);
     const userId = id();
     const timer = setTimeout(() => {
       const pending = room.pending.get(userId);
@@ -328,7 +339,9 @@ const handlers = {
     timer.unref();
     room.pending.set(userId, { userId, username, conn, timer });
     conn.pendingRoom = room.code;
-    send(hostUser.conn, 'join_request', { user_id: userId, username });
+    // Kalau host sedang offline, permintaan menunggu dan dikirim ulang saat host kembali terhubung.
+    const hostUser = host(room);
+    if (hostUser?.conn) send(hostUser.conn, 'join_request', { user_id: userId, username });
     ack(conn, rid);
   },
 
@@ -368,6 +381,8 @@ const handlers = {
     const ctx = requireRoom(conn, rid);
     if (!ctx) return;
     ack(conn, rid);
+    // Host yang keluar berarti menutup room untuk semua anggota.
+    if (ctx.room.hostId === ctx.user.userId) return closeRoom(ctx.room);
     removeUser(ctx.room, ctx.user.userId);
   },
 
@@ -502,10 +517,9 @@ export function announceRestart(etaMs = 5000) {
   for (const room of rooms.values()) toUsers(room, 'server_restarting', { eta_ms: etaMs, reason: 'Server dimulai ulang' });
 }
 
-// Bersihkan room yang semua penggunanya offline dan tidak punya penghitung tunggu lagi.
+// Bersihkan room yang tidak punya host lagi (room dengan host offline tetap ada sampai host menutupnya).
 setInterval(() => {
   for (const room of [...rooms.values()]) {
-    const users = [...room.users.values()];
-    if (!users.some((u) => u.conn) && !users.some((u) => u.graceTimer)) dropRoom(room);
+    if (!room.users.has(room.hostId)) dropRoom(room);
   }
 }, 60_000).unref();
