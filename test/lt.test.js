@@ -171,11 +171,11 @@ test('alur lengkap Dengar Bersama', async () => {
   assert.equal(restored.state.queue.length, 3);
   assert.equal(restored.state.users.length, 2);
 
-  // keluar: host lama (offline) dipertahankan sampai masa tunggu habis, lalu room dibersihkan saat semua keluar
+  // keluar: host yang keluar menutup room untuk semua anggota
   back.send('leave_room', {});
   await new Promise((r) => setTimeout(r, 300));
   const health = await (await fetch(`http://localhost:${PORT}/api/health`)).json();
-  assert.equal(health.listenTogether.rooms, 1);
+  assert.equal(health.listenTogether.rooms, 0);
   await stopServer();
 });
 
@@ -195,14 +195,48 @@ test('kick dan pergantian host otomatis', async () => {
   host.send('kick_user', { user_id: b.info.user_id, reason: 'uji' });
   assert.equal((await b.c.expect('kicked')).reason, 'uji');
   assert.equal((await a.c.expect('user_left')).username, 'B');
-  // host menghilang: A menjadi host setelah masa tunggu
+  // host menghilang dan tidak kembali: setelah masa tunggu habis, room ditutup untuk anggota
   host.close();
   assert.equal((await a.c.expect('user_disconnected', 4000)).username, 'Host');
-  const changed = await a.c.expect('host_changed', 4000);
-  assert.equal(changed.new_host_id, a.info.user_id);
-  a.c.send('playback_action', { action: 'pause', position: 10 });
+  assert.equal((await a.c.expect('kicked', 4000)).reason, 'room_closed');
+  await stopServer();
+});
+
+test('join saat host offline menunggu host kembali', async () => {
+  await startServer();
+  const host = new Client(); await host.open();
+  host.send('create_room', { username: 'Host' });
+  const created = await host.expect('room_created');
+  host.close();
+  const guest = new Client(); await guest.open();
+  guest.send('join_room', { room_code: created.room_code, username: 'Tamu' });
+  await new Promise((r) => setTimeout(r, 150));
+  assert.equal(guest.inbox.some((m) => m.type === 'error'), false);
+  const back = new Client(); await back.open();
+  back.send('reconnect', { session_token: created.session_token });
+  await back.expect('reconnected');
+  const req = await back.expect('join_request');
+  assert.equal(req.username, 'Tamu');
+  back.send('approve_join', { user_id: req.user_id });
+  assert.equal((await guest.expect('join_approved')).room_code, created.room_code);
+  await stopServer();
+});
+
+test('halaman undangan: kode dan tombol salin saat aktif, pesan saat room sudah tutup', async () => {
+  await startServer();
+  const host = new Client(); await host.open();
+  host.send('create_room', { username: 'Host' });
+  const created = await host.expect('room_created');
+  const base = `http://localhost:${PORT}/listen?code=${created.room_code}`;
+  const active = await (await fetch(base)).text();
+  assert.match(active, /id="copy-room-code"/);
+  assert.ok(active.includes(created.room_code));
+  host.send('leave_room', {});
   await new Promise((r) => setTimeout(r, 200));
-  assert.equal(a.c.inbox.some((m) => m.type === 'error'), false);
+  const gone = await (await fetch(base)).text();
+  assert.match(gone, /Room sudah tidak ada/);
+  assert.equal(gone.includes(created.room_code), false);
+  assert.equal(gone.includes('copy-room-code'), false);
   await stopServer();
 });
 
