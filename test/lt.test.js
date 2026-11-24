@@ -54,7 +54,7 @@ test('alur lengkap Dengar Bersama', async () => {
 
   host.send('create_room', { username: 'Hanz' });
   const created = await host.expect('room_created');
-  assert.match(created.room_code, /^[A-Z0-9]{6}$/);
+  assert.match(created.room_code, /^[A-Z0-9]{8}$/);
 
   // ping/pong
   host.send('ping', { client_time: 1234, sequence: 1 });
