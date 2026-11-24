@@ -41,28 +41,10 @@ const innerNav = (links = '<a href="/">Beranda</a>') => `<header class="navbar">
   </div>
 </header>`;
 
-const innerFooter = `<footer class="footer footer--inner">
-  <div class="container">
-    <div class="footer__top">
-      <a class="footer__brand" href="/" aria-label="Moralist, beranda">
-        <img src="/assets/logo.png" alt="" width="44" height="44" loading="lazy">
-        <strong>Moralist</strong>
-      </a>
-      <p class="footer__disclaimer">Moralist bukan produk resmi YouTube atau Google.</p>
-    </div>
-    <nav class="footer__links" aria-label="Footer">
-      <a href="/#unduh">Unduh</a>
-      <a href="/#isi">Isi aplikasi</a>
-      <a href="/privacy">Privasi</a>
-    </nav>
-  </div>
-</footer>`;
-
 const innerPage = ({ title, desc, nav, main, script = '', bodyClass = '' }) => `${head(title, desc)}
 <body class="inner ${bodyClass}">
 ${innerNav(nav)}
 <main class="inner__main"><div class="container">${main}</div></main>
-${innerFooter}
 ${script}
 </body></html>`;
 
@@ -278,7 +260,7 @@ export function adminPage(username) {
     <h2 id="h-add">Tambah versi</h2>
     <form id="add-form" class="stack">
       <label for="f-version">Nomor versi</label>
-      <input id="f-version" name="version" inputmode="numeric" pattern="\\d+\\.\\d+\\.\\d+" placeholder="2.0.0" required>
+      <input id="f-version" name="version" inputmode="numeric" pattern="\\d+\\.\\d+\\.\\d+" placeholder="1.0.0" required>
       <fieldset>
         <legend>Sumber APK</legend>
         <label class="choice"><input type="radio" name="source" value="upload" checked> Unggah berkas APK ke server</label>
