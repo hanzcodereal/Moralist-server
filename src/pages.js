@@ -72,7 +72,7 @@ const SHOTS = [
 const STEPS = [
   ['Unduh', 'Ambil APK terbaru dari bagian Unduh di halaman ini.'],
   ['Pasang', 'Buka berkas APK, lalu izinkan pemasangan dari browser atau pengelola berkas jika Android memintanya.'],
-  ['Dengarkan', 'Cari lagu, simpan ke pustaka, lalu unduh untuk didengar saat jaringan putus.'],
+  ['Dengarkan', 'Cari lagu, simpan ke pustaka, lalu unduh untuk didengar saat offline.'],
 ];
 
 const chevron = (d) => `<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -124,7 +124,7 @@ export function homePage({ latest, history, base }) {
       <div class="hero__layout">
         <div class="hero__copy">
           <h1 id="hero-title">Musik <span>tanpa gangguan</span></h1>
-          <p class="hero__lede">Moralist adalah pemutar YouTube Music untuk Android. Seluruh tampilannya berbahasa Indonesia, dari menu sampai pesan galat.</p>
+          <p class="hero__lede">Moralist adalah pemutar musik Android gratis yang memungkinkan Anda mencari lagu, memutar lagu secara streaming, membuat daftar putar, membaca lirik, dan mengunduh lagu untuk didengarkan secara offline.</p>
           <div class="hero__actions">
             <a class="btn btn-filled btn-lg" href="#unduh">Unduh APK</a>
             <a class="btn btn-outlined btn-lg" href="#isi">Lihat isi aplikasi</a>
@@ -133,12 +133,12 @@ export function homePage({ latest, history, base }) {
         <div class="hero__signal">
           <div>
             <strong>Pemutar untuk Android</strong>
-            <p>Dibuat untuk pengguna Indonesia, dengan pembaruan langsung dari dalam aplikasi.</p>
+            <p>Dibuat dengan pembaruan langsung dari dalam aplikasi.</p>
           </div>
           <dl class="hero__stats" aria-label="Informasi rilis">
             <div><dt>Versi</dt><dd>${latest ? esc(latest.version) : 'Belum ada'}</dd></div>
             <div><dt>Android</dt><dd>7.0+</dd></div>
-            <div><dt>Bahasa</dt><dd>Indonesia</dd></div>
+            <div><dt>Ukuran</dt><dd>${latest ? esc(formatSize(latest.size)) : 'Belum ada'}</dd></div>
           </dl>
         </div>
       </div>
@@ -247,7 +247,7 @@ export function aboutPage() {
     ['Misi kami', 'Kami percaya aplikasi musik harus sederhana, menghormati pengguna, dan transparan. Moralist tidak memiliki iklan, dan tidak ada sistem berbayar.'],
     ['Siapa yang membangunnya?', 'Moralist adalah proyek pribadi. Ini bukan perusahaan atau layanan komersial: Moralist dibuat dan dikelola oleh Hanz Dev Official.'],
     ['Tujuan situs web ini', 'Situs web ini adalah tempat proyek pribadi saya. Situs ini menjelaskan fitur-fitur, tautan ke unduhan resmi.'],
-    ['Mendukung proyek', `Moralist dikembangkan di waktu luang dan tetap gratis untuk semua orang. Jika Anda menyukainya, Anda dapat memberi bintang pada repositori, membagikannya kepada teman, berkontribusi, atau berdonasi melalui <a href="https://saweria.co/hanzreally" rel="noopener">Saweria</a>.`],
+    ['Mendukung proyek', `Moralist dikembangkan di waktu luang dan tetap gratis untuk semua orang. Jika Anda menyukainya, Anda dapat membagikannya kepada teman atau berdonasi melalui <a href="https://saweria.co/hanzreally" rel="noopener">Saweria</a>.`],
     ['Penafian konten', 'Moralist tidak menyimpan file musik apa pun di situs web ini atau di servernya sendiri. Aplikasi ini adalah klien yang mengakses konten yang tersedia untuk umum. Pengguna bertanggung jawab untuk mematuhi hukum dan ketentuan layanan yang berlaku di negara mereka.'],
   ];
   return innerPage({
@@ -264,18 +264,14 @@ export function privacyPage() {
   return innerPage({
     title: 'Privasi: Moralist',
     desc: 'Data apa yang dikumpulkan server Moralist.',
-    main: `<article class="panel-card prose">
-  <h1>Privasi</h1>
-  <p>Halaman ini menjelaskan apa yang dicatat oleh server Moralist, yaitu server yang melayani situs ini dan pengecekan pembaruan aplikasi.</p>
-  <h2>Yang dicatat server</h2>
-  <p>Server menghitung berapa kali tiap versi APK diunduh. Seperti server web pada umumnya, alamat IP dan permintaan dapat tercatat di log hosting yang kamu pakai untuk menjalankan server ini. Server tidak meminta akun atau data pribadi dari pengunjung.</p>
-  <h2>Dengar Bersama</h2>
-  <p>Saat kamu memakai fitur Dengar Bersama, server menyimpan nama pengguna yang kamu isi, kode room, daftar anggota, lagu yang sedang diputar beserta antreannya, dan token sesi supaya kamu bisa tersambung lagi. Data itu disimpan di database server selama room masih ada, lalu dihapus saat room ditutup atau semua anggotanya keluar.</p>
-  <h2>Yang dilakukan aplikasi</h2>
-  <p>Saat cek pembaruan, aplikasi meminta daftar versi dari server ini. Pemutaran musik, pencarian, dan login akun berjalan langsung antara aplikasi dan YouTube Music, tidak melewati server ini.</p>
-  <h2>Kontak</h2>
-  <p>Pertanyaan bisa dikirim ke <a href="mailto:${SITE.email}">${SITE.email}</a>.</p>
-</article>`,
+    main: `<h1 class="about__title">Privasi</h1>
+<p class="about__lead">Halaman ini menjelaskan apa yang dicatat oleh server Moralist, yaitu server yang melayani situs ini dan pengecekan pembaruan aplikasi.</p>
+<div class="about__grid">
+  <article class="about__card about__card--1"><h2>Yang dicatat server</h2><p>Server menghitung berapa kali tiap versi APK diunduh. Seperti server web pada umumnya, alamat IP dan permintaan dapat tercatat di log hosting yang kamu pakai untuk menjalankan server ini. Server tidak meminta akun atau data pribadi dari pengunjung.</p></article>
+  <article class="about__card about__card--2"><h2>Dengar Bersama</h2><p>Saat kamu memakai fitur Dengar Bersama, server menyimpan nama pengguna yang kamu isi, kode room, daftar anggota, lagu yang sedang diputar beserta antreannya, dan token sesi supaya kamu bisa tersambung lagi. Data itu disimpan di database server selama room masih ada, lalu dihapus saat room ditutup atau semua anggotanya keluar.</p></article>
+  <article class="about__card about__card--3"><h2>Yang dilakukan aplikasi</h2><p>Saat cek pembaruan, aplikasi meminta daftar versi dari server ini. Pemutaran musik, pencarian, dan login akun berjalan langsung antara aplikasi dan YouTube Music, tidak melewati server ini.</p></article>
+  <article class="about__card about__card--1"><h2>Kontak</h2><p>Pertanyaan bisa dikirim ke <a href="mailto:${SITE.email}">${SITE.email}</a>.</p></article>
+</div>`,
   });
 }
 
@@ -332,7 +328,7 @@ export function adminPage(username) {
       </div>
       <div id="src-external" hidden>
         <label for="f-url">Tautan unduhan (https)</label>
-        <input id="f-url" name="url" type="url" placeholder="https://contoh.com/moralist-2.0.0.apk">
+        <input id="f-url" name="url" type="url" placeholder="https://contoh.com/moralist-1.0.0.apk">
       </div>
       <label class="choice"><input type="checkbox" name="published" checked> Terbitkan sekarang</label>
       <progress id="progress" max="100" value="0" hidden></progress>
