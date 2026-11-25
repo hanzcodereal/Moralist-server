@@ -9,7 +9,7 @@ import { db, APK_DIR, isVersion, listReleases, publishedReleases, getRelease } f
 import * as auth from './auth.js';
 import { acceptUpgrade } from './lt/ws.js';
 import * as lt from './lt/rooms.js';
-import { invitePage, homePage, privacyPage, notFoundPage, adminLoginPage, adminPage } from './pages.js';
+import { invitePage, homePage, aboutPage, privacyPage, notFoundPage, adminLoginPage, adminPage } from './pages.js';
 
 const PORT = Number(process.env.PORT || 3000);
 const MAX_APK_BYTES = Number(process.env.MAX_APK_MB || 300) * 1024 * 1024;
@@ -266,6 +266,7 @@ async function route(req, res) {
     const code = String(url.searchParams.get('code') || url.searchParams.get('r') || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 8).toUpperCase();
     return html(res, 200, invitePage(code, lt.roomExists(code)));
   }
+  if (p === '/about') return html(res, 200, aboutPage());
   if (p === '/privacy') return html(res, 200, privacyPage());
   if (p.startsWith('/assets/')) return serveStatic(req, res, p.slice('/assets/'.length));
   if (p === '/api/health') return json(res, 200, { ok: true, listenTogether: lt.stats() });
