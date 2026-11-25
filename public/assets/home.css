@@ -1678,3 +1678,75 @@ progress { width: 100%; height: 12px; accent-color: var(--md-sys-color-primary);
 .footer__top { padding-bottom: 0; gap: 8px; }
 .footer__links { padding: 16px 0 0; }
 .contact { padding: 56px 0 56px; }
+
+/* Screenshots */
+.shots { padding: 72px 0 40px; }
+.gallery-wrap { position: relative; }
+.gallery {
+  display: flex;
+  gap: 24px;
+  margin: 0;
+  padding: 20px calc(50% - min(135px, 34vw)) 24px;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+.gallery::-webkit-scrollbar { display: none; }
+.gallery:focus-visible { outline: 2px solid var(--md-sys-color-primary); outline-offset: 4px; border-radius: 40px; }
+.gallery li {
+  --t: 1;
+  flex: 0 0 min(270px, 68vw);
+  scroll-snap-align: center;
+  padding: 7px;
+  border-radius: 40px;
+  background: var(--md-sys-color-surface-container-highest);
+  box-shadow: 0 0 0 2px var(--md-sys-color-outline-variant), 0 18px 40px rgba(0, 0, 0, .35);
+  transform: scale(calc(1 - var(--t) * .12));
+  opacity: calc(1 - var(--t) * .45);
+  transition: box-shadow .3s ease;
+}
+.gallery li.is-active { box-shadow: 0 0 0 2px var(--md-sys-color-primary), 0 24px 56px rgba(0, 0, 0, .45); }
+.gallery img { display: block; width: 100%; height: auto; aspect-ratio: 720 / 1510; object-fit: cover; border-radius: 33px; background: var(--md-sys-color-surface-container); }
+.gallery-btn {
+  position: absolute; top: 45%; z-index: 2;
+  display: grid; place-items: center;
+  width: 52px; height: 52px; padding: 0; border: 0; border-radius: 50%;
+  background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .35); cursor: pointer;
+  transition: transform var(--md-motion-spatial-fast), border-radius var(--md-motion-spatial-fast);
+}
+.gallery-btn:hover { border-radius: 16px; transform: scale(1.08); }
+.gallery-btn:active { transform: scale(.9); }
+#gallery-prev { left: 0; }
+#gallery-next { right: 0; }
+@media (max-width: 520px) { .gallery-btn { display: none; } }
+.gallery-dots { display: flex; justify-content: center; gap: 8px; }
+.gallery-dots span { width: 8px; height: 8px; border-radius: 999px; background: var(--md-sys-color-outline-variant); transition: width var(--md-motion-spatial-fast), background .2s ease; }
+.gallery-dots span.is-active { width: 28px; background: var(--md-sys-color-primary); }
+
+/* Mulailah dalam Tiga Langkah */
+.quick { padding: 72px 0 80px; margin-top: 48px; }
+.quick__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.quick__card { padding: 28px; border-radius: 32px; background: var(--md-sys-color-surface-container-high); }
+.quick__card:nth-child(2) { border-radius: 48px 16px 48px 16px; }
+.quick__num {
+  display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 16px;
+  border-radius: 50% 16px 50% 16px;
+  background: var(--md-sys-color-tertiary-container); color: var(--md-sys-color-on-tertiary-container);
+  font-size: 1.25rem; font-weight: 800;
+}
+.quick__card h3 { margin: 0 0 8px; font-size: 1.25rem; }
+.quick__card p { margin: 0; line-height: 1.6; color: var(--md-sys-color-on-surface-variant); }
+
+/* Halaman Tentang */
+.about__title { margin: 0 0 28px; font: var(--md-sys-typescale-display-small); letter-spacing: var(--md-sys-typescale-display-small-tracking); }
+.about__title span { color: var(--md-sys-color-primary); }
+.about__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 16px; }
+.about__card { padding: clamp(22px, 4vw, 32px); border-radius: 32px; background: var(--md-sys-color-surface-container-low); }
+.about__card:nth-child(1) { grid-column: 1 / -1; border-radius: 44px 44px 18px 44px; }
+.about__card--2 { border-radius: 48px 16px 48px 16px; }
+.about__card h2 { margin: 0 0 10px; font: var(--md-sys-typescale-headline-small); letter-spacing: var(--md-sys-typescale-headline-small-tracking); }
+.about__card p { margin: 0; line-height: 1.65; color: var(--md-sys-color-on-surface-variant); }
+.about__card a { color: var(--md-sys-color-primary); font-weight: 600; }
