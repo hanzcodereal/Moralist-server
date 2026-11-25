@@ -34,7 +34,7 @@ ${extra}
 const brandLink = (cls = 'navbar__brand', size = 46) => `<a class="${cls}" href="/" aria-label="Moralist, beranda"><img class="${cls}-mark" src="/assets/logo.png" alt="" width="${size}" height="${size}"><span>Moralist</span></a>`;
 
 // Kerangka halaman dalam (privasi, admin, undangan, 404) dengan desain yang sama seperti beranda.
-const innerNav = (links = '<a href="/">Beranda</a>') => `<header class="navbar">
+const innerNav = (links = '<a href="/">Beranda</a><a href="/about">Tentang</a>') => `<header class="navbar">
   <div class="container navbar__inner">
     ${brandLink()}
     <nav class="navbar__links navbar__links--always" aria-label="Utama">${links}</nav>
@@ -61,6 +61,21 @@ const FEATURES = [
   ['Cast ke speaker', 'Alirkan ke perangkat Google Cast, DLNA, FCast, dan Sonos di jaringan yang sama.'],
   ['Cadangkan dan pulihkan', 'Simpan data aplikasi ke satu berkas dan pulihkan saat pindah ponsel.'],
 ];
+
+const SHOTS = [
+  ['beranda', 'Beranda Moralist dengan speed dial dan mix lagu'],
+  ['pemutar', 'Layar pemutar dengan sampul album dan kontrol putar'],
+  ['lirik', 'Lirik tersinkron yang berjalan mengikuti lagu'],
+  ['koleksi', 'Koleksi berisi lagu disukai, diunduh, dan playlist'],
+];
+
+const STEPS = [
+  ['Unduh', 'Ambil APK terbaru dari bagian Unduh di halaman ini.'],
+  ['Pasang', 'Buka berkas APK, lalu izinkan pemasangan dari browser atau pengelola berkas jika Android memintanya.'],
+  ['Dengarkan', 'Cari lagu, simpan ke pustaka, lalu unduh untuk didengar saat jaringan putus.'],
+];
+
+const chevron = (d) => `<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
 export function homePage({ latest, history, base }) {
   const dl = latest
@@ -95,6 +110,8 @@ export function homePage({ latest, history, base }) {
     </a>
     <nav class="navbar__links" aria-label="Utama">
       <a href="#isi">Isi aplikasi</a>
+      <a href="#cuplikan">Screenshots</a>
+      <a href="/about">Tentang</a>
       <a href="#riwayat">Riwayat</a>
       <a href="#kontak">Kontak</a>
       <a class="btn btn-filled btn-sm" href="#unduh">Unduh</a>
@@ -135,6 +152,29 @@ export function homePage({ latest, history, base }) {
       </header>
       <div class="features__grid">
         ${FEATURES.map(([t, d], i) => `<article class="features__card features__card--${(i % 6) + 1}"><div class="features__copy"><h3>${esc(t)}</h3><p>${esc(d)}</p></div></article>`).join('\n        ')}
+      </div>
+    </div>
+  </section>
+
+  <section id="cuplikan" class="shots" aria-labelledby="h-cuplikan">
+    <div class="container">
+      <header class="features-head"><h2 id="h-cuplikan">Screenshots</h2></header>
+      <div class="gallery-wrap">
+        <button class="gallery-btn" id="gallery-prev" type="button" aria-label="Screenshot sebelumnya">${chevron('M15 5l-7 7 7 7')}</button>
+        <ul class="gallery" id="gallery" tabindex="0" aria-label="Screenshot Moralist">
+          ${SHOTS.map(([f, alt]) => `<li><img src="/assets/images/ss-${f}.webp" alt="${esc(alt)}" width="720" height="1510" loading="lazy"></li>`).join('\n          ')}
+        </ul>
+        <button class="gallery-btn" id="gallery-next" type="button" aria-label="Screenshot berikutnya">${chevron('M9 5l7 7-7 7')}</button>
+      </div>
+      <div class="gallery-dots" id="gallery-dots" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <section id="langkah" class="quick section-band" aria-labelledby="h-langkah">
+    <div class="container">
+      <header class="features-head"><h2 id="h-langkah">Mulailah dalam Tiga Langkah</h2></header>
+      <div class="quick__grid">
+        ${STEPS.map(([t, d], i) => `<article class="quick__card"><span class="quick__num">${i + 1}</span><h3>${esc(t)}</h3><p>${esc(d)}</p></article>`).join('\n        ')}
       </div>
     </div>
   </section>
@@ -192,12 +232,32 @@ export function homePage({ latest, history, base }) {
     <nav class="footer__links" aria-label="Footer">
       <a href="#unduh">Unduh</a>
       <a href="#isi">Isi aplikasi</a>
+      <a href="/about">Tentang</a>
       <a href="/privacy">Privasi</a>
     </nav>
   </div>
 </footer>
 <script src="/assets/site.js" defer></script>
 </body></html>`;
+}
+
+export function aboutPage() {
+  const cards = [
+    ['Apa itu Moralist?', 'Moralist adalah pemutar musik Android gratis yang memungkinkan Anda mencari lagu, memutar lagu secara streaming, membuat daftar putar, membaca lirik, dan mengunduh lagu untuk didengarkan secara offline.'],
+    ['Misi kami', 'Kami percaya aplikasi musik harus sederhana, menghormati pengguna, dan transparan. Moralist tidak memiliki iklan, dan tidak ada sistem berbayar.'],
+    ['Siapa yang membangunnya?', 'Moralist adalah proyek pribadi. Ini bukan perusahaan atau layanan komersial: Moralist dibuat dan dikelola oleh Hanz Dev Official.'],
+    ['Tujuan situs web ini', 'Situs web ini adalah tempat proyek pribadi saya. Situs ini menjelaskan fitur-fitur, tautan ke unduhan resmi.'],
+    ['Mendukung proyek', `Moralist dikembangkan di waktu luang dan tetap gratis untuk semua orang. Jika Anda menyukainya, Anda dapat memberi bintang pada repositori, membagikannya kepada teman, berkontribusi, atau berdonasi melalui <a href="https://saweria.co/hanzreally" rel="noopener">Saweria</a>.`],
+    ['Penafian konten', 'Moralist tidak menyimpan file musik apa pun di situs web ini atau di servernya sendiri. Aplikasi ini adalah klien yang mengakses konten yang tersedia untuk umum. Pengguna bertanggung jawab untuk mematuhi hukum dan ketentuan layanan yang berlaku di negara mereka.'],
+  ];
+  return innerPage({
+    title: 'Tentang Moralist',
+    desc: 'Apa itu Moralist, misinya, dan siapa yang membangunnya.',
+    main: `<h1 class="about__title">Tentang <span>Moralist</span></h1>
+<div class="about__grid">
+  ${cards.map(([t, d], i) => `<article class="about__card about__card--${(i % 3) + 1}"><h2>${esc(t)}</h2><p>${i === 4 ? d : esc(d)}</p></article>`).join('\n  ')}
+</div>`,
+  });
 }
 
 export function privacyPage() {
