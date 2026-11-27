@@ -12,7 +12,11 @@ const MAX_ROOMS = Number(process.env.LT_MAX_ROOMS || 2000);
 const MAX_QUEUE = 500;
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const ROOM_CODE_LENGTH = 8; // harus sama dengan ROOM_CODE_LENGTH di aplikasi (ListenTogetherScreen.kt)
-const FEATURES = ['server_restarting'];
+const FEATURES = ['server_restarting', 'chat'];
+const MAX_CHAT_STORED = 500; // pesan obrolan disimpan selama room masih ada
+const MAX_CHAT_LENGTH = 400;
+const CHAT_HISTORY_CHUNK = 50;
+const CHAT_BURST = 6; // maksimal pesan per jendela 10 detik per pengguna
 
 const rooms = new Map(); // kode -> room
 const sessions = new Map(); // token -> {code, userId}
@@ -41,7 +45,7 @@ export const roomSummaries = () =>
 function snapshot(room) {
   return JSON.stringify({
     code: room.code, hostId: room.hostId, track: room.track, isPlaying: room.isPlaying, position: room.position, lastUpdate: room.lastUpdate,
-    volume: room.volume, queue: room.queue, queueTitle: room.queueTitle, createdAt: room.createdAt,
+    volume: room.volume, queue: room.queue, queueTitle: room.queueTitle, createdAt: room.createdAt, chat: room.chat,
     users: [...room.users.values()].map((u) => ({ userId: u.userId, username: u.username, token: u.token, joinedAt: u.joinedAt })),
   });
 }
@@ -78,7 +82,7 @@ export function loadRooms() {
     let d;
     try { d = JSON.parse(row.data); } catch { continue; }
     const room = newRoom(d.code, d.createdAt);
-    Object.assign(room, { hostId: d.hostId, track: d.track, isPlaying: false, position: d.position || 0, lastUpdate: now(), volume: d.volume ?? 1, queue: d.queue || [], queueTitle: d.queueTitle || '' });
+    Object.assign(room, { hostId: d.hostId, track: d.track, isPlaying: false, position: d.position || 0, lastUpdate: now(), volume: d.volume ?? 1, queue: d.queue || [], queueTitle: d.queueTitle || '', chat: Array.isArray(d.chat) ? d.chat.slice(-MAX_CHAT_STORED) : [] });
     for (const u of d.users) {
       const user = { userId: u.userId, username: u.username, token: u.token, joinedAt: u.joinedAt, conn: null, graceTimer: null };
       room.users.set(u.userId, user);
@@ -93,7 +97,7 @@ export function loadRooms() {
 }
 
 function newRoom(code, createdAt = now()) {
-  return { code, hostId: '', users: new Map(), pending: new Map(), track: null, isPlaying: false, position: 0, lastUpdate: now(), volume: 1, queue: [], queueTitle: '', createdAt, barrier: null, suggestions: new Map() };
+  return { code, hostId: '', users: new Map(), pending: new Map(), track: null, isPlaying: false, position: 0, lastUpdate: now(), volume: 1, queue: [], queueTitle: '', createdAt, barrier: null, suggestions: new Map(), chat: [] };
 }
 
 // ---------- kirim ----------
@@ -106,6 +110,15 @@ const toUsers = (room, type, payload, except = null) => {
   for (const u of room.users.values()) if (u.conn && u.userId !== except) send(u.conn, type, payload);
 };
 const host = (room) => room.users.get(room.hostId);
+// Pesan obrolan hanya dikirim ke aplikasi yang menyatakan mendukungnya, agar aplikasi lama tidak menerima tipe pesan asing.
+const supportsChat = (conn) => Boolean(conn?.features?.has('chat'));
+const toChatUsers = (room, type, payload) => {
+  for (const u of room.users.values()) if (u.conn && supportsChat(u.conn)) send(u.conn, type, payload);
+};
+function sendChatHistory(room, conn) {
+  if (!supportsChat(conn) || !room.chat.length) return;
+  for (let i = 0; i < room.chat.length; i += CHAT_HISTORY_CHUNK) send(conn, 'chat_history', { messages: room.chat.slice(i, i + CHAT_HISTORY_CHUNK) });
+}
 
 function roomState(room) {
   return {
@@ -360,6 +373,7 @@ const handlers = {
     pending.conn.pendingRoom = null;
     attach(room, user, pending.conn);
     send(pending.conn, 'join_approved', { room_code: room.code, user_id: user.userId, session_token: user.token, state: roomState(room) });
+    sendChatHistory(room, pending.conn);
     toUsers(room, 'user_joined', { user_id: user.userId, username: user.username }, user.userId);
     ack(conn, rid);
     saveNow(room);
@@ -440,7 +454,26 @@ const handlers = {
     const wasOffline = !user.conn;
     attach(room, user, conn);
     send(conn, 'reconnected', { room_code: room.code, user_id: user.userId, state: roomState(room), is_host: room.hostId === user.userId }, rid);
+    sendChatHistory(room, conn);
     if (wasOffline) toUsers(room, 'user_reconnected', { user_id: user.userId, username: user.username }, user.userId);
+  },
+
+  send_chat(conn, p, rid) {
+    const ctx = requireRoom(conn, rid);
+    if (!ctx) return;
+    const { room, user } = ctx;
+    const text = String(p.text ?? '').replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, '').trim().slice(0, MAX_CHAT_LENGTH);
+    if (!text) return ack(conn, rid);
+    const t = now();
+    user.chatTimes = (user.chatTimes || []).filter((x) => t - x < 10_000);
+    if (user.chatTimes.length >= CHAT_BURST) return sendError(conn, 'chat_rate_limited', 'Terlalu cepat mengirim pesan', rid);
+    user.chatTimes.push(t);
+    const message = { message_id: id(), user_id: user.userId, username: user.username, text, timestamp: t };
+    room.chat.push(message);
+    if (room.chat.length > MAX_CHAT_STORED) room.chat.splice(0, room.chat.length - MAX_CHAT_STORED);
+    toChatUsers(room, 'chat_message', message);
+    ack(conn, rid);
+    save(room);
   },
 
   suggest_track(conn, p, rid) {
@@ -499,6 +532,7 @@ export function handleConnection(conn) {
     if (!conn.capsDone) {
       if (env.type !== 'client_capabilities') return conn.close(1002, 'capabilities diperlukan');
       conn.capsDone = true;
+      conn.features = new Set(Array.isArray(env.payload?.features) ? env.payload.features : []);
       return send(conn, 'server_capabilities', { supports_protobuf: true, supports_compression: false, server_version: 'moralist-1', features: FEATURES, can_host: true });
     }
     const handler = handlers[env.type];
