@@ -18,7 +18,7 @@ const stopServer = () => new Promise((resolve) => { proc.once('exit', resolve); 
 
 class Client {
   constructor() { this.inbox = []; this.waiters = []; }
-  async open() {
+  async open(features = []) {
     this.ws = new WebSocket(`ws://localhost:${PORT}/ws`);
     this.ws.binaryType = 'arraybuffer';
     this.ws.onmessage = (e) => {
@@ -28,7 +28,7 @@ class Client {
       else this.inbox.push(m);
     };
     await new Promise((res, rej) => { this.ws.onopen = res; this.ws.onerror = rej; });
-    this.send('client_capabilities', { supports_protobuf: true, supports_compression: true, client_version: '2.0.0', features: [] });
+    this.send('client_capabilities', { supports_protobuf: true, supports_compression: true, client_version: '2.0.0', features });
     return this.expect('server_capabilities');
   }
   send(type, payload) { this.ws.send(encode(type, payload)); }
@@ -241,3 +241,49 @@ test('halaman undangan: kode dan tombol salin saat aktif, pesan saat room sudah 
 });
 
 test.after(() => { try { proc.kill('SIGKILL'); } catch { /* sudah berhenti */ } fs.rmSync(dataDir, { recursive: true, force: true }); });
+
+test('obrolan room: riwayat tersimpan, hanya untuk aplikasi yang mendukung', async () => {
+  await startServer();
+  const host = new Client();
+  const caps = await host.open(['chat']);
+  assert.ok(caps.features.includes('chat'));
+  host.send('create_room', { username: 'Hanz' });
+  const created = await host.expect('room_created');
+
+  const join = async (name, features) => {
+    const c = new Client();
+    await c.open(features);
+    c.send('join_room', { room_code: created.room_code, username: name });
+    const req = await host.expect('join_request');
+    host.send('approve_join', { user_id: req.user_id });
+    await c.expect('join_approved');
+    return c;
+  };
+  const guest = await join('Budi', ['chat']);
+  const legacy = await join('Lama', []);
+
+  guest.send('send_chat', { text: '  halo semua 👋  ' });
+  const a = await host.expect('chat_message');
+  const b = await guest.expect('chat_message');
+  assert.equal(a.text, 'halo semua 👋');
+  assert.equal(a.username, 'Budi');
+  assert.equal(b.message_id, a.message_id);
+  host.send('send_chat', { text: 'selamat datang' });
+  await guest.expect('chat_message');
+  await new Promise((r) => setTimeout(r, 200));
+  assert.equal(legacy.inbox.some((m) => m.type.startsWith('chat_')), false, 'aplikasi lama tidak boleh menerima pesan obrolan');
+
+  // anggota baru melihat riwayat
+  const late = await join('Siti', ['chat']);
+  const hist = await late.expect('chat_history');
+  assert.deepEqual(hist.messages.map((m) => m.text), ['halo semua 👋', 'selamat datang']);
+
+  // pesan kosong diabaikan, pembatas laju bekerja
+  guest.send('send_chat', { text: '   ' });
+  for (let i = 0; i < 8; i++) guest.send('send_chat', { text: `spam ${i}` });
+  const err = await guest.expect('error');
+  assert.equal(err.code, 'chat_rate_limited');
+
+  [host, guest, legacy, late].forEach((c) => c.close());
+  await stopServer();
+});
