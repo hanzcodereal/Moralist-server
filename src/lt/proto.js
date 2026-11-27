@@ -11,7 +11,8 @@ const ROOM = {
   room_code: [1, 's'], host_id: [2, 's'], users: [3, '[U]'], current_track: [4, 'T'], is_playing: [5, 'b'], position: [6, 'l'],
   last_update: [7, 'l'], volume: [8, 'f'], queue: [9, '[T]'], revision: [10, 'l'], queue_title: [11, 's'],
 };
-const NESTED = { T: TRACK, U: USER, R: ROOM };
+const CHAT = { message_id: [1, 's'], user_id: [2, 's'], username: [3, 's'], text: [4, 's'], timestamp: [5, 'l'] };
+const NESTED = { T: TRACK, U: USER, R: ROOM, C: CHAT };
 
 export const SCHEMAS = {
   create_room: { username: [1, 's'] },
@@ -34,6 +35,7 @@ export const SCHEMAS = {
   suggest_track: { track_info: [1, 'T'] },
   approve_suggestion: { suggestion_id: [1, 's'] },
   reject_suggestion: { suggestion_id: [1, 's'], reason: [2, 's'] },
+  send_chat: { text: [1, 's'] },
   client_capabilities: { supports_protobuf: [1, 'b'], supports_compression: [2, 'b'], client_version: [3, 's'], features: [4, '[s]'] },
 
   room_created: { room_code: [1, 's'], user_id: [2, 's'], session_token: [3, 's'] },
@@ -65,6 +67,8 @@ export const SCHEMAS = {
   server_capabilities: { supports_protobuf: [1, 'b'], supports_compression: [2, 'b'], server_version: [3, 's'], features: [4, '[s]'], can_host: [5, 'b'] },
   server_restarting: { eta_ms: [1, 'l'], reason: [2, 's'] },
   suggestion_submitted: { suggestion_id: [1, 's'], track_info: [2, 'T'] },
+  chat_message: CHAT,
+  chat_history: { messages: [1, '[C]'] },
   // tanpa payload
   leave_room: {}, request_sync: {}, ack: {},
 };
